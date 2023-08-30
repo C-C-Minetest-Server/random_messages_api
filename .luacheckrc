@@ -16,7 +16,7 @@ globals = {
 
 	"minetest", "core",
 
-	"random_messages"
+	"random_messages_api"
 }
 
 read_globals = {
