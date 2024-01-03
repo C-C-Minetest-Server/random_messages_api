@@ -70,8 +70,10 @@ end
 
 local function loop()
     local msg = random_messages_api.pick_message()
-    minetest.chat_send_all(minetest.get_color_escape_sequence("grey") .. msg)
-    minetest.log("action", "[random_messages_api] MSG: " .. minetest.get_translated_string("en", msg))
+    if msg then
+        minetest.chat_send_all(minetest.get_color_escape_sequence("grey") .. msg)
+        minetest.log("action", "[random_messages_api] MSG: " .. minetest.get_translated_string("en", msg))
+    end
     minetest.after(random_messages_api.interval, loop)
 end
 
