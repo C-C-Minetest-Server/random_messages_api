@@ -71,9 +71,28 @@ if minetest.settings:get_bool("random_messages_api.load_custom_messages", true) 
     end
 end
 
+local function get_player_num()
+    if minetest.settings:get_bool("random_messages_api.send_without_players", false) then
+        return 1
+    end
+
+    local all_players = minetest.get_connected_players()
+    local players_count = #all_players
+    if minetest.global_exists("afk_indicator") then
+        local all_afk = afk_indicator.get_all_longer_than(300)
+        for _, player in ipairs(all_players) do
+            local name = player:get_player_name()
+            if all_afk[name] then
+                players_count = players_count - 1
+            end
+        end
+    end
+
+    return players_count
+end
+
 local function loop()
-    if minetest.settings:get_bool("random_messages_api.send_without_players", false)
-        or #minetest.get_connected_players() ~= 0 then
+    if get_player_num() ~= 0 then
         local msg = random_messages_api.pick_message()
         if msg then
             minetest.chat_send_all(minetest.get_color_escape_sequence("grey") .. msg)
