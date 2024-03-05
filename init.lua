@@ -72,7 +72,7 @@ if minetest.settings:get_bool("random_messages_api.load_custom_messages", true) 
 end
 
 local function loop()
-    if minetest.settings:get_bool("random_messages_api.send_without_players", true)
+    if minetest.settings:get_bool("random_messages_api.send_without_players", false)
         or #minetest.get_connected_players() ~= 0 then
         local msg = random_messages_api.pick_message()
         if msg then
