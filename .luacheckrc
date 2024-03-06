@@ -29,6 +29,8 @@ read_globals = {
 	"unpack",
 	"loadstring",
 
+	"afk_indicator",
+
 	table = {
 		fields = {
 			"copy",
