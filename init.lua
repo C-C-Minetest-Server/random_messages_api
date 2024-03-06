@@ -91,11 +91,19 @@ local function get_player_num()
     return players_count
 end
 
+-- Create our own to avoid sending into relayed chatrooms
+local function chat_send_all(msg)
+    for _, player in ipairs(minetest.get_connected_players()) do
+        local name = player:get_player_name()
+        minetest.chat_send_player(name, msg)
+    end
+end
+
 local function loop()
     if get_player_num() ~= 0 then
         local msg = random_messages_api.pick_message()
         if msg then
-            minetest.chat_send_all(minetest.get_color_escape_sequence("grey") .. msg)
+            chat_send_all(minetest.get_color_escape_sequence("grey") .. msg)
             minetest.log("action", "[random_messages_api] MSG: " .. minetest.get_translated_string("en", msg))
         end
     end
