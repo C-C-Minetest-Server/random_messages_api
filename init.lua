@@ -71,43 +71,19 @@ if minetest.settings:get_bool("random_messages_api.load_custom_messages", true) 
     end
 end
 
-local function get_player_num()
-    if minetest.settings:get_bool("random_messages_api.send_without_players", false) then
-        return 1
-    end
-
-    local all_players = minetest.get_connected_players()
-    local players_count = #all_players
-    if minetest.global_exists("afk_indicator") then
-        local all_afk = afk_indicator.get_all_longer_than(300)
-        for _, player in ipairs(all_players) do
+local function loop()
+    local msg = random_messages_api.pick_message()
+    if msg then
+        for _, player in ipairs(minetest.get_connected_players()) do
             local name = player:get_player_name()
-            if all_afk[name] then
-                players_count = players_count - 1
+            if not (minetest.global_exists("afk_indicator")
+                    and afk_indicator.get(name) > 300) then
+                minetest.chat_send_player(name, minetest.get_color_escape_sequence("grey") .. msg)
             end
         end
-    end
-
-    return players_count
-end
-
--- Create our own to avoid sending into relayed chatrooms
-local function chat_send_all(msg)
-    for _, player in ipairs(minetest.get_connected_players()) do
-        local name = player:get_player_name()
-        minetest.chat_send_player(name, msg)
-    end
-end
-
-local function loop()
-    if get_player_num() ~= 0 then
-        local msg = random_messages_api.pick_message()
-        if msg then
-            chat_send_all(minetest.get_color_escape_sequence("grey") .. msg)
-            minetest.log("action", "[random_messages_api] MSG: " .. minetest.get_translated_string("en", msg))
-        end
+        minetest.log("action", "[random_messages_api] MSG: " .. minetest.get_translated_string("en", msg))
     end
     minetest.after(random_messages_api.interval, loop)
 end
 
-minetest.after(random_messages_api.interval, loop)
+minetest.after(random_messages_api.interval + math.random(), loop)
