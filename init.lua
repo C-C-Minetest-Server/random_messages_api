@@ -71,13 +71,34 @@ if minetest.settings:get_bool("random_messages_api.load_custom_messages", true) 
     end
 end
 
+minetest.register_chatcommand("toggle_random_messages", {
+    params = "",
+    description = "Toggle whether to show the random messages to you",
+    privs = {},
+    func = function(name, param)
+        if not minetest.settings:get_bool("random_messages_api.allow_hiding_messages", true) then
+            return false, "This functionality has been disabled by the server."
+        end
+        local player = minetest.get_player_by_name(name)
+        if not player then return end    
+        local meta = player:get_meta()
+        local is_hidden = (meta:get_int("hide_random_messages") == 1)
+        meta:set_int("hide_random_messages",not is_hidden and 1 or 0)
+        return true, "Random messages are now "..(is_hidden and "shown to you." or "hidden from you.")
+    end
+})
+
 local function loop()
+    local force_show_messages = not minetest.settings:get_bool("random_messages_api.allow_hiding_messages", true)
     local msg = random_messages_api.pick_message()
     if msg then
         for _, player in ipairs(minetest.get_connected_players()) do
             local name = player:get_player_name()
-            if not (minetest.global_exists("afk_indicator")
-                    and afk_indicator.get(name) > 300) then
+            if force_show_messages then 
+                minetest.chat_send_player(name, minetest.get_color_escape_sequence("grey") .. msg)
+            elseif not (minetest.global_exists("afk_indicator")
+                and afk_indicator.get(name) > 300) -- don't worry about sending messages to afk players
+                and player:get_meta():get_int("hide_random_messages") ~= 1 then -- check per-player config
                 minetest.chat_send_player(name, minetest.get_color_escape_sequence("grey") .. msg)
             end
         end
