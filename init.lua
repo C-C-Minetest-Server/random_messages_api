@@ -18,7 +18,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
     USA
 ]]
-
+local S = core.get_translator("random_messags_api")
 random_messages_api = {
     list = {},
     interval = tonumber(minetest.settings:get("random_messages_api.interval") or 60) or 60,
@@ -71,13 +71,32 @@ if minetest.settings:get_bool("random_messages_api.load_custom_messages", true) 
     end
 end
 
+minetest.register_chatcommand("toggle_random_messages", {
+    params = "",
+    description = S("Toggle whether to show the random messages to you"),
+    privs = {},
+    func = function(name, param)
+        if not minetest.settings:get_bool("random_messages_api.allow_hiding_messages", true) then
+            return false, S("This functionality has been disabled by the server.")
+        end
+        local player = minetest.get_player_by_name(name)
+        if not player then return end    
+        local meta = player:get_meta()
+        local is_hidden = (meta:get_int("hide_random_messages") == 1)
+        meta:set_int("hide_random_messages",not is_hidden and 1 or 0)
+        return true, is_hidden and S("Random messages are now shown to you.") or S("Random messages are now hidden from you.")
+    end
+})
+
 local function loop()
+    local force_show_messages = not minetest.settings:get_bool("random_messages_api.allow_hiding_messages", true)
     local msg = random_messages_api.pick_message()
     if msg then
         for _, player in ipairs(minetest.get_connected_players()) do
             local name = player:get_player_name()
             if not (minetest.global_exists("afk_indicator")
-                    and afk_indicator.get(name) > 300) then
+                and afk_indicator.get(name) > 300) -- don't worry about sending messages to afk players
+                and (force_show_messages or player:get_meta():get_int("hide_random_messages") ~= 1) then -- check per-player config
                 minetest.chat_send_player(name, minetest.get_color_escape_sequence("grey") .. msg)
             end
         end
